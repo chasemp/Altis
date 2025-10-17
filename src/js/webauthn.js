@@ -24,14 +24,19 @@ class WebAuthnManager {
      */
     async checkPlatformAuthenticator() {
         try {
+            console.log('Checking platform authenticator availability...');
             const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            console.log('Platform authenticator available:', available);
+            
             if (!available) {
-                throw new Error('Platform authenticator (built-in biometric) is not available on this device');
+                console.warn('Platform authenticator not available, will try fallback approach');
+                return false; // Don't throw error, just return false
             }
             return true;
         } catch (error) {
             console.error('Platform authenticator check failed:', error);
-            throw new Error('Unable to check for platform authenticator support');
+            console.warn('Platform authenticator check failed, will try fallback approach');
+            return false; // Don't throw error, just return false
         }
     }
 
@@ -109,14 +114,25 @@ class WebAuthnManager {
         this.checkAndroidRequirements();
 
         // Check if platform authenticator is available
-        await this.checkPlatformAuthenticator();
+        const platformAvailable = await this.checkPlatformAuthenticator();
+        
+        // Generate a unique user ID if not provided
+        if (!userId) {
+            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // For Android Chrome, try fallback approach first if platform authenticator is not available
+        if (!platformAvailable) {
+            console.log('Platform authenticator not available, trying fallback approach first...');
+            try {
+                return await this.registerFallback(userId);
+            } catch (fallbackError) {
+                console.error('Fallback registration failed:', fallbackError);
+                // Continue to try platform authenticator approach
+            }
+        }
 
         try {
-            // Generate a unique user ID if not provided
-            if (!userId) {
-                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            }
-
             // Generate challenge
             const challenge = this.generateChallenge();
             
@@ -217,60 +233,130 @@ class WebAuthnManager {
         
         const challenge = this.generateChallenge();
         
-        const createOptions = {
-            publicKey: {
-                challenge: challenge,
-                rp: {
-                    name: "Altis",
-                    id: window.location.hostname || "localhost",
-                },
-                user: {
-                    id: new TextEncoder().encode(userId),
-                    name: userId,
-                    displayName: "Altis User",
-                },
-                pubKeyCredParams: [
-                    { type: "public-key", alg: -7 }, // ES256
-                    { type: "public-key", alg: -257 }, // RS256
-                ],
-                authenticatorSelection: {
-                    // Remove platform restriction for fallback
-                    userVerification: "preferred",
-                    residentKey: "preferred"
-                },
-                timeout: 60000,
-                attestation: "none"
+        // Try multiple approaches for Android Chrome
+        const approaches = [
+            // Approach 1: No authenticator selection at all
+            {
+                name: "No authenticator selection",
+                options: {
+                    publicKey: {
+                        challenge: challenge,
+                        rp: {
+                            name: "Altis",
+                            id: window.location.hostname || "localhost",
+                        },
+                        user: {
+                            id: new TextEncoder().encode(userId),
+                            name: userId,
+                            displayName: "Altis User",
+                        },
+                        pubKeyCredParams: [
+                            { type: "public-key", alg: -7 }, // ES256
+                            { type: "public-key", alg: -257 }, // RS256
+                        ],
+                        timeout: 60000,
+                        attestation: "none"
+                    }
+                }
+            },
+            // Approach 2: Minimal authenticator selection
+            {
+                name: "Minimal authenticator selection",
+                options: {
+                    publicKey: {
+                        challenge: challenge,
+                        rp: {
+                            name: "Altis",
+                            id: window.location.hostname || "localhost",
+                        },
+                        user: {
+                            id: new TextEncoder().encode(userId),
+                            name: userId,
+                            displayName: "Altis User",
+                        },
+                        pubKeyCredParams: [
+                            { type: "public-key", alg: -7 }, // ES256
+                            { type: "public-key", alg: -257 }, // RS256
+                        ],
+                        authenticatorSelection: {
+                            userVerification: "preferred"
+                        },
+                        timeout: 60000,
+                        attestation: "none"
+                    }
+                }
+            },
+            // Approach 3: Cross-platform authenticator
+            {
+                name: "Cross-platform authenticator",
+                options: {
+                    publicKey: {
+                        challenge: challenge,
+                        rp: {
+                            name: "Altis",
+                            id: window.location.hostname || "localhost",
+                        },
+                        user: {
+                            id: new TextEncoder().encode(userId),
+                            name: userId,
+                            displayName: "Altis User",
+                        },
+                        pubKeyCredParams: [
+                            { type: "public-key", alg: -7 }, // ES256
+                            { type: "public-key", alg: -257 }, // RS256
+                        ],
+                        authenticatorSelection: {
+                            authenticatorAttachment: "cross-platform",
+                            userVerification: "preferred",
+                            residentKey: "preferred"
+                        },
+                        timeout: 60000,
+                        attestation: "none"
+                    }
+                }
             }
-        };
+        ];
 
-        console.log('Fallback create options:', createOptions);
+        for (const approach of approaches) {
+            try {
+                console.log(`Trying ${approach.name}...`);
+                console.log('Create options:', approach.options);
+                
+                const credential = await navigator.credentials.create(approach.options);
+                console.log(`Success with ${approach.name}:`, credential);
+                
+                // Store credential data
+                const credentialData = {
+                    id: credential.id,
+                    rawId: this.arrayBufferToBase64URL(credential.rawId),
+                    publicKey: this.arrayBufferToBase64URL(credential.response.publicKey),
+                    userId: userId,
+                    createdAt: new Date().toISOString()
+                };
+
+                this.credentials.set(credential.id, credentialData);
+                this.currentUserId = userId;
+                this.currentCredentialId = credential.id;
+
+                // Store in localStorage for persistence
+                localStorage.setItem('altis_credentials', JSON.stringify(Array.from(this.credentials.entries())));
+                localStorage.setItem('altis_user_id', userId);
+                localStorage.setItem('altis_credential_id', credential.id);
+
+                return {
+                    success: true,
+                    credentialId: credential.id,
+                    userId: userId,
+                    message: `Biometric credential created successfully (${approach.name})!`
+                };
+                
+            } catch (error) {
+                console.error(`${approach.name} failed:`, error);
+                // Continue to next approach
+            }
+        }
         
-        const credential = await navigator.credentials.create(createOptions);
-        
-        // Store credential data
-        const credentialData = {
-            id: credential.id,
-            rawId: this.arrayBufferToBase64URL(credential.rawId),
-            publicKey: this.arrayBufferToBase64URL(credential.response.publicKey),
-            userId: userId,
-            createdAt: new Date().toISOString()
-        };
-
-        this.credentials.set(credential.id, credentialData);
-        this.currentUserId = userId;
-        this.currentCredentialId = credential.id;
-
-        // Store in localStorage for persistence
-        localStorage.setItem('altis_credentials', JSON.stringify(Array.from(this.credentials.entries())));
-        localStorage.setItem('altis_user_id', userId);
-        localStorage.setItem('altis_credential_id', credential.id);
-
-        return {
-            success: true,
-            credentialId: credential.id,
-            userId: userId,
-            message: 'Biometric credential created successfully (fallback method)!'
-        };
+        throw new Error('All fallback registration approaches failed');
     }
 
     /**
