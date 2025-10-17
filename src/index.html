@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AltiraApp - Biometric PWA</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="PWA with WebAuthn biometric authentication">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AltiraApp">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <h1>🔐 AltiraApp</h1>
+            <p>Biometric Authentication PWA</p>
+        </header>
+        
+        <main class="main">
+            <div id="auth-container" class="auth-container">
+                <div class="auth-card">
+                    <h2>Welcome to AltiraApp</h2>
+                    <p>Secure access with biometric authentication</p>
+                    
+                    <div id="auth-status" class="auth-status">
+                        <div class="status-indicator" id="status-indicator"></div>
+                        <span id="status-text">Checking authentication...</span>
+                    </div>
+                    
+                    <div class="auth-buttons">
+                        <button id="register-btn" class="btn btn-primary" disabled>
+                            Create Biometric Key
+                        </button>
+                        <button id="authenticate-btn" class="btn btn-secondary" disabled>
+                            Authenticate
+                        </button>
+                        <button id="logout-btn" class="btn btn-outline" disabled>
+                            Logout
+                        </button>
+                    </div>
+                    
+                    <div id="user-info" class="user-info" style="display: none;">
+                        <h3>Authenticated User</h3>
+                        <p><strong>User ID:</strong> <span id="user-id"></span></p>
+                        <p><strong>Credential ID:</strong> <span id="credential-id"></span></p>
+                        <p><strong>Authentication Count:</strong> <span id="auth-count">0</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="content" class="content" style="display: none;">
+                <h2>🎉 Successfully Authenticated!</h2>
+                <p>You are now logged in using biometric authentication.</p>
+                <div class="features">
+                    <div class="feature">
+                        <h3>🔒 Secure</h3>
+                        <p>Your biometric data never leaves your device</p>
+                    </div>
+                    <div class="feature">
+                        <h3>⚡ Fast</h3>
+                        <p>Quick authentication with fingerprint or face</p>
+                    </div>
+                    <div class="feature">
+                        <h3>📱 Native</h3>
+                        <p>Uses your device's built-in security</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>Powered by WebAuthn & Progressive Web App technology</p>
+        </footer>
+    </div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+    
+    <!-- App Scripts -->
+    <script type="module" src="/js/app.js"></script>
+</body>
+</html>

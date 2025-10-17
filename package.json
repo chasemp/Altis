@@ -1,0 +1,17 @@
+{
+  "name": "altira-app",
+  "version": "1.0.0",
+  "description": "PWA with WebAuthn biometric authentication",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "keywords": ["pwa", "webauthn", "biometric", "authentication"],
+  "author": "AltiraApp",
+  "license": "MIT"
+}
