@@ -80,13 +80,13 @@ class WebAuthnManager {
                 publicKey: {
                     challenge: challenge,
                     rp: {
-                        name: "AltiraApp",
+                        name: "Altis",
                         id: window.location.hostname,
                     },
                     user: {
                         id: new TextEncoder().encode(userId),
                         name: userId,
-                        displayName: "AltiraApp User",
+                        displayName: "Altis User",
                     },
                     pubKeyCredParams: [
                         { type: "public-key", alg: -7 }, // ES256
@@ -120,9 +120,9 @@ class WebAuthnManager {
             this.currentCredentialId = credential.id;
 
             // Store in localStorage for persistence
-            localStorage.setItem('altira_credentials', JSON.stringify(Array.from(this.credentials.entries())));
-            localStorage.setItem('altira_user_id', userId);
-            localStorage.setItem('altira_credential_id', credential.id);
+            localStorage.setItem('altis_credentials', JSON.stringify(Array.from(this.credentials.entries())));
+            localStorage.setItem('altis_user_id', userId);
+            localStorage.setItem('altis_credential_id', credential.id);
 
             return {
                 success: true,
@@ -192,7 +192,7 @@ class WebAuthnManager {
             this.currentCredentialId = credentialId;
 
             // Store updated data
-            localStorage.setItem('altira_auth_count', this.authCount.toString());
+            localStorage.setItem('altis_auth_count', this.authCount.toString());
 
             return {
                 success: true,
@@ -213,15 +213,15 @@ class WebAuthnManager {
      */
     loadStoredCredentials() {
         try {
-            const stored = localStorage.getItem('altira_credentials');
+            const stored = localStorage.getItem('altis_credentials');
             if (stored) {
                 const entries = JSON.parse(stored);
                 this.credentials = new Map(entries);
             }
 
-            const userId = localStorage.getItem('altira_user_id');
-            const credentialId = localStorage.getItem('altira_credential_id');
-            const authCount = localStorage.getItem('altira_auth_count');
+            const userId = localStorage.getItem('altis_user_id');
+            const credentialId = localStorage.getItem('altis_credential_id');
+            const authCount = localStorage.getItem('altis_auth_count');
 
             if (userId) this.currentUserId = userId;
             if (credentialId) this.currentCredentialId = credentialId;
@@ -249,9 +249,9 @@ class WebAuthnManager {
         this.authCount = 0;
         
         // Clear session data but keep credentials for future use
-        localStorage.removeItem('altira_user_id');
-        localStorage.removeItem('altira_credential_id');
-        localStorage.removeItem('altira_auth_count');
+        localStorage.removeItem('altis_user_id');
+        localStorage.removeItem('altis_credential_id');
+        localStorage.removeItem('altis_auth_count');
     }
 
     /**

@@ -268,17 +268,17 @@ window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     
-    // Show install button or notification
-    if (window.pwaApp) {
-        window.pwaApp.showNotification('This app can be installed on your device!', 'info');
-    }
+        // Show install button or notification
+        if (window.pwaApp) {
+            window.pwaApp.showNotification('Altis can be installed on your device!', 'info');
+        }
 });
 
 // Handle PWA installation
 window.addEventListener('appinstalled', () => {
     console.log('PWA was installed');
     if (window.pwaApp) {
-        window.pwaApp.showNotification('App installed successfully!', 'success');
+        window.pwaApp.showNotification('Altis installed successfully!', 'success');
     }
 });
 

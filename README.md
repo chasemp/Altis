@@ -1,4 +1,4 @@
-# AltiraApp - Biometric PWA
+# Altis - Biometric PWA
 
 A Progressive Web App demonstrating WebAuthn biometric authentication using Passkeys. Built following PWA best practices from the [peadoubleueh template](https://github.com/chasemp/peadoubleueh).
 
@@ -32,7 +32,7 @@ npm run preview
 1. Push to `main` branch
 2. Enable GitHub Pages in repository settings
 3. Set source to "Deploy from a branch" → "main" → "/docs"
-4. Your PWA will be live at `https://yourusername.github.io/AltiraApp`
+4. Your PWA will be live at `https://altis.523.life`
 
 ## 🔐 Biometric Authentication
 
@@ -60,7 +60,7 @@ This PWA implements WebAuthn (Web Authentication API) for secure biometric authe
 ## 📁 Project Structure
 
 ```
-AltiraApp/
+Altis/
 ├── src/                    # Source code
 │   ├── index.html         # Main HTML entry
 │   ├── css/styles.css     # Styles

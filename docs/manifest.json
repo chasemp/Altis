@@ -1,7 +1,7 @@
 {
-  "name": "AltiraApp - Biometric PWA",
-  "short_name": "AltiraApp",
-  "description": "PWA with WebAuthn biometric authentication",
+  "name": "Altis - Biometric PWA",
+  "short_name": "Altis",
+  "description": "Altis PWA with WebAuthn biometric authentication",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

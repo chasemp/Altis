@@ -1,7 +1,7 @@
 {
-  "name": "altira-app",
+  "name": "altis-app",
   "version": "1.0.0",
-  "description": "PWA with WebAuthn biometric authentication",
+  "description": "Altis PWA with WebAuthn biometric authentication",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,6 @@
     "vite": "^5.0.0"
   },
   "keywords": ["pwa", "webauthn", "biometric", "authentication"],
-  "author": "AltiraApp",
+  "author": "Altis",
   "license": "MIT"
 }

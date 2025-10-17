@@ -1,11 +1,11 @@
 /**
- * Service Worker for AltiraApp PWA
+ * Service Worker for Altis PWA
  * Provides offline functionality and caching strategies
  */
 
-const CACHE_NAME = 'altira-app-v1';
-const STATIC_CACHE = 'altira-static-v1';
-const DYNAMIC_CACHE = 'altira-dynamic-v1';
+const CACHE_NAME = 'altis-app-v1';
+const STATIC_CACHE = 'altis-static-v1';
+const DYNAMIC_CACHE = 'altis-dynamic-v1';
 
 // Files to cache immediately
 const STATIC_FILES = [
@@ -208,7 +208,7 @@ self.addEventListener('push', (event) => {
     console.log('Service Worker: Push notification received');
     
     const options = {
-        body: event.data ? event.data.text() : 'New notification from AltiraApp',
+        body: event.data ? event.data.text() : 'New notification from Altis',
         icon: '/assets/icon-192.png',
         badge: '/assets/icon-192.png',
         vibrate: [100, 50, 100],
@@ -231,7 +231,7 @@ self.addEventListener('push', (event) => {
     };
 
     event.waitUntil(
-        self.registration.showNotification('AltiraApp', options)
+        self.registration.showNotification('Altis', options)
     );
 });
 
