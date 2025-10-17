@@ -3,9 +3,9 @@
  * Provides offline functionality and caching strategies
  */
 
-const CACHE_NAME = 'altis-app-v1';
-const STATIC_CACHE = 'altis-static-v1';
-const DYNAMIC_CACHE = 'altis-dynamic-v1';
+const CACHE_NAME = 'altis-app-v0.0.1';
+const STATIC_CACHE = 'altis-static-v0.0.1';
+const DYNAMIC_CACHE = 'altis-dynamic-v0.0.1';
 
 // Files to cache immediately
 const STATIC_FILES = [

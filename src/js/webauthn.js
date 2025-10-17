@@ -20,6 +20,22 @@ class WebAuthnManager {
     }
 
     /**
+     * Check if platform authenticators are available
+     */
+    async checkPlatformAuthenticator() {
+        try {
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            if (!available) {
+                throw new Error('Platform authenticator (built-in biometric) is not available on this device');
+            }
+            return true;
+        } catch (error) {
+            console.error('Platform authenticator check failed:', error);
+            throw new Error('Unable to check for platform authenticator support');
+        }
+    }
+
+    /**
      * Check Android-specific requirements
      */
     checkAndroidRequirements() {
@@ -92,6 +108,9 @@ class WebAuthnManager {
         // Check Android-specific requirements
         this.checkAndroidRequirements();
 
+        // Check if platform authenticator is available
+        await this.checkPlatformAuthenticator();
+
         try {
             // Generate a unique user ID if not provided
             if (!userId) {
@@ -107,7 +126,7 @@ class WebAuthnManager {
                     challenge: challenge,
                     rp: {
                         name: "Altis",
-                        id: window.location.hostname,
+                        id: window.location.hostname || "localhost",
                     },
                     user: {
                         id: new TextEncoder().encode(userId),
@@ -119,17 +138,22 @@ class WebAuthnManager {
                         { type: "public-key", alg: -257 }, // RS256
                     ],
                     authenticatorSelection: {
-                        // Remove platform restriction for Android compatibility
-                        userVerification: "preferred", // Change from "required" to "preferred"
-                        residentKey: "preferred" // Change from "required" to "preferred"
+                        authenticatorAttachment: "platform", // Force platform authenticator (built-in)
+                        userVerification: "required", // Require biometric verification
+                        residentKey: "required" // Store credential on device
                     },
                     timeout: 60000, // 60 seconds
                     attestation: "none" // Don't require attestation for simplicity
                 }
             };
 
+            // Debug: Log the create options
+            console.log('Creating credential with options:', createOptions);
+            
             // Create the credential
             const credential = await navigator.credentials.create(createOptions);
+            
+            console.log('Credential created successfully:', credential);
             
             // Store credential data
             const credentialData = {
@@ -160,6 +184,16 @@ class WebAuthnManager {
         } catch (error) {
             console.error('Registration failed:', error);
             
+            // Try fallback approach for Android Chrome
+            if (error.name === 'NotSupportedError' || error.message.includes('platform authenticator')) {
+                console.log('Trying fallback approach without platform authenticator restriction...');
+                try {
+                    return await this.registerFallback(userId);
+                } catch (fallbackError) {
+                    console.error('Fallback registration also failed:', fallbackError);
+                }
+            }
+            
             // Provide more specific error messages for common Android issues
             if (error.name === 'NotSupportedError') {
                 throw new Error('Biometric authentication is not supported on this device');
@@ -173,6 +207,70 @@ class WebAuthnManager {
                 throw new Error(`Registration failed: ${error.message || 'Unknown error occurred'}`);
             }
         }
+    }
+
+    /**
+     * Fallback registration method for Android Chrome compatibility
+     */
+    async registerFallback(userId) {
+        console.log('Attempting fallback registration...');
+        
+        const challenge = this.generateChallenge();
+        
+        const createOptions = {
+            publicKey: {
+                challenge: challenge,
+                rp: {
+                    name: "Altis",
+                    id: window.location.hostname || "localhost",
+                },
+                user: {
+                    id: new TextEncoder().encode(userId),
+                    name: userId,
+                    displayName: "Altis User",
+                },
+                pubKeyCredParams: [
+                    { type: "public-key", alg: -7 }, // ES256
+                    { type: "public-key", alg: -257 }, // RS256
+                ],
+                authenticatorSelection: {
+                    // Remove platform restriction for fallback
+                    userVerification: "preferred",
+                    residentKey: "preferred"
+                },
+                timeout: 60000,
+                attestation: "none"
+            }
+        };
+
+        console.log('Fallback create options:', createOptions);
+        
+        const credential = await navigator.credentials.create(createOptions);
+        
+        // Store credential data
+        const credentialData = {
+            id: credential.id,
+            rawId: this.arrayBufferToBase64URL(credential.rawId),
+            publicKey: this.arrayBufferToBase64URL(credential.response.publicKey),
+            userId: userId,
+            createdAt: new Date().toISOString()
+        };
+
+        this.credentials.set(credential.id, credentialData);
+        this.currentUserId = userId;
+        this.currentCredentialId = credential.id;
+
+        // Store in localStorage for persistence
+        localStorage.setItem('altis_credentials', JSON.stringify(Array.from(this.credentials.entries())));
+        localStorage.setItem('altis_user_id', userId);
+        localStorage.setItem('altis_credential_id', credential.id);
+
+        return {
+            success: true,
+            credentialId: credential.id,
+            userId: userId,
+            message: 'Biometric credential created successfully (fallback method)!'
+        };
     }
 
     /**

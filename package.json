@@ -1,6 +1,6 @@
 {
   "name": "altis-app",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Altis PWA with WebAuthn biometric authentication",
   "type": "module",
   "scripts": {
