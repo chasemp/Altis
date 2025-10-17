@@ -47,9 +47,14 @@ class WebAuthnManager {
         const userAgent = navigator.userAgent.toLowerCase();
         const isAndroid = userAgent.includes('android');
         const isChrome = userAgent.includes('chrome');
+        const isFirefox = userAgent.includes('firefox');
         const isSecureContext = window.isSecureContext;
         
+        console.log('Browser detection:', { isAndroid, isChrome, isFirefox, isSecureContext });
+        
         if (isAndroid && isChrome) {
+            console.log('Android Chrome detected - applying Chrome-specific workarounds');
+            
             if (!isSecureContext) {
                 throw new Error('HTTPS is required for biometric authentication on Android Chrome');
             }
@@ -58,6 +63,8 @@ class WebAuthnManager {
             if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
                 throw new Error('Biometric authentication requires HTTPS on Android Chrome');
             }
+        } else if (isAndroid && isFirefox) {
+            console.log('Android Firefox detected - should work normally');
         }
         
         return true;
@@ -121,9 +128,12 @@ class WebAuthnManager {
             userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
-        // For Android Chrome, try fallback approach first if platform authenticator is not available
-        if (!platformAvailable) {
-            console.log('Platform authenticator not available, trying fallback approach first...');
+        // For Android Chrome, always try fallback approach first due to Chrome bugs
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isAndroidChrome = userAgent.includes('android') && userAgent.includes('chrome');
+        
+        if (isAndroidChrome || !platformAvailable) {
+            console.log('Android Chrome detected or platform authenticator not available, trying fallback approach first...');
             try {
                 return await this.registerFallback(userId);
             } catch (fallbackError) {
@@ -219,6 +229,14 @@ class WebAuthnManager {
                 throw new Error('Security error - make sure you are using HTTPS');
             } else if (error.name === 'InvalidStateError') {
                 throw new Error('Invalid state - credential may already exist');
+            } else if (error.message.includes('credential manager')) {
+                // Chrome-specific error message
+                const userAgent = navigator.userAgent.toLowerCase();
+                if (userAgent.includes('android') && userAgent.includes('chrome')) {
+                    throw new Error('Chrome on Android has known WebAuthn issues. Try using Firefox Mobile instead, or use a different device.');
+                } else {
+                    throw new Error(`Registration failed: ${error.message}`);
+                }
             } else {
                 throw new Error(`Registration failed: ${error.message || 'Unknown error occurred'}`);
             }
@@ -235,7 +253,30 @@ class WebAuthnManager {
         
         // Try multiple approaches for Android Chrome
         const approaches = [
-            // Approach 1: No authenticator selection at all
+            // Approach 1: Ultra-minimal for Chrome
+            {
+                name: "Ultra-minimal Chrome",
+                options: {
+                    publicKey: {
+                        challenge: challenge,
+                        rp: {
+                            name: "Altis",
+                            id: window.location.hostname || "localhost",
+                        },
+                        user: {
+                            id: new TextEncoder().encode(userId),
+                            name: userId,
+                            displayName: "Altis User",
+                        },
+                        pubKeyCredParams: [
+                            { type: "public-key", alg: -7 }, // ES256
+                        ],
+                        timeout: 30000,
+                        attestation: "none"
+                    }
+                }
+            },
+            // Approach 2: No authenticator selection at all
             {
                 name: "No authenticator selection",
                 options: {

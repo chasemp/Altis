@@ -21,8 +21,8 @@
     <link rel="manifest" href="/manifest.json">
     
     <!-- Styles -->
-  <script type="module" crossorigin src="/assets/main-CHdGFwSa.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/main-DXK4-MEx.css">
+  <script type="module" crossorigin src="/assets/main-iP3ZEWsM.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/main-CICNEqWY.css">
 </head>
 <body>
     <div id="app">
@@ -66,6 +66,37 @@
             <div id="content" class="content" style="display: none;">
                 <h2>🎉 Successfully Authenticated!</h2>
                 <p>You are now logged in using biometric authentication.</p>
+                
+                <div class="identity-details">
+                    <h3>🔐 Identity Details</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>User ID:</label>
+                            <span id="content-user-id" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Credential ID:</label>
+                            <span id="content-credential-id" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Authentication Count:</label>
+                            <span id="content-auth-count" class="detail-value">0</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Registration Date:</label>
+                            <span id="content-registration-date" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Last Authentication:</label>
+                            <span id="content-last-auth" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Browser:</label>
+                            <span id="content-browser" class="detail-value">-</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="features">
                     <div class="feature">
                         <h3>🔒 Secure</h3>
@@ -79,6 +110,15 @@
                         <h3>📱 Native</h3>
                         <p>Uses your device's built-in security</p>
                     </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="return-home-btn" class="btn btn-primary">
+                        🏠 Return to Home
+                    </button>
+                    <button id="logout-content-btn" class="btn btn-outline">
+                        🚪 Logout
+                    </button>
                 </div>
             </div>
         </main>

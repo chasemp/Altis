@@ -27,7 +27,9 @@ class PWAApp {
             credentialId: document.getElementById('credential-id'),
             authCount: document.getElementById('auth-count'),
             authContainer: document.getElementById('auth-container'),
-            content: document.getElementById('content')
+            content: document.getElementById('content'),
+            returnHomeBtn: document.getElementById('return-home-btn'),
+            logoutContentBtn: document.getElementById('logout-content-btn')
         };
     }
 
@@ -112,6 +114,8 @@ class PWAApp {
         this.elements.registerBtn.addEventListener('click', () => this.handleRegister());
         this.elements.authenticateBtn.addEventListener('click', () => this.handleAuthenticate());
         this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
+        this.elements.returnHomeBtn.addEventListener('click', () => this.handleReturnHome());
+        this.elements.logoutContentBtn.addEventListener('click', () => this.handleLogout());
     }
 
     /**
@@ -166,6 +170,13 @@ class PWAApp {
     handleLogout() {
         this.webauthn.logout();
         this.updateStatus('loading', 'Logged out');
+        this.showRegisteredState();
+    }
+
+    /**
+     * Handle return home button click
+     */
+    handleReturnHome() {
         this.showRegisteredState();
     }
 
@@ -225,9 +236,58 @@ class PWAApp {
      * Show user information
      */
     showUserInfo(userId, credentialId, authCount = 0) {
+        // Update the small user info panel
         this.elements.userId.textContent = userId;
         this.elements.credentialId.textContent = credentialId;
         this.elements.authCount.textContent = authCount;
+        
+        // Update the detailed content page
+        this.updateContentDetails(userId, credentialId, authCount);
+    }
+
+    /**
+     * Update detailed content information
+     */
+    updateContentDetails(userId, credentialId, authCount = 0) {
+        // Get credential data for additional details
+        const credentialData = this.webauthn.credentials.get(credentialId);
+        
+        // Update content page details
+        document.getElementById('content-user-id').textContent = userId;
+        document.getElementById('content-credential-id').textContent = credentialId;
+        document.getElementById('content-auth-count').textContent = authCount;
+        
+        // Registration date
+        const registrationDate = credentialData ? 
+            new Date(credentialData.createdAt).toLocaleString() : 
+            'Unknown';
+        document.getElementById('content-registration-date').textContent = registrationDate;
+        
+        // Last authentication (current time)
+        const lastAuth = new Date().toLocaleString();
+        document.getElementById('content-last-auth').textContent = lastAuth;
+        
+        // Browser information
+        const userAgent = navigator.userAgent;
+        const browserInfo = this.getBrowserInfo(userAgent);
+        document.getElementById('content-browser').textContent = browserInfo;
+    }
+
+    /**
+     * Get browser information from user agent
+     */
+    getBrowserInfo(userAgent) {
+        if (userAgent.includes('Chrome')) {
+            return 'Chrome';
+        } else if (userAgent.includes('Firefox')) {
+            return 'Firefox';
+        } else if (userAgent.includes('Safari')) {
+            return 'Safari';
+        } else if (userAgent.includes('Edge')) {
+            return 'Edge';
+        } else {
+            return 'Unknown Browser';
+        }
     }
 
     /**
