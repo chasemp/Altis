@@ -36,6 +36,9 @@ class PWAApp {
      */
     async initializeApp() {
         try {
+            // Initialize version display
+            this.initializeVersionDisplay();
+            
             // Check WebAuthn support
             if (!this.webauthn.isSupported) {
                 this.updateStatus('error', 'WebAuthn not supported in this browser');
@@ -65,6 +68,40 @@ class PWAApp {
         } catch (error) {
             console.error('App initialization failed:', error);
             this.updateStatus('error', 'Initialization failed');
+        }
+    }
+
+    /**
+     * Initialize version display
+     */
+    initializeVersionDisplay() {
+        const versionNumber = document.getElementById('version-number');
+        const buildInfo = document.getElementById('build-info');
+        
+        if (versionNumber && buildInfo) {
+            // Get current date and time
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            // Format date strings
+            const dateString = `${year}${month}${day}-${hours}${minutes}`;
+            const timeString = now.toLocaleString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            
+            // Update version display
+            versionNumber.textContent = `v0.0.1+${dateString}`;
+            buildInfo.textContent = `Build: ${dateString} (${timeString})`;
         }
     }
 
