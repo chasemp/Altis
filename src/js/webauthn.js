@@ -20,6 +20,29 @@ class WebAuthnManager {
     }
 
     /**
+     * Check Android-specific requirements
+     */
+    checkAndroidRequirements() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isAndroid = userAgent.includes('android');
+        const isChrome = userAgent.includes('chrome');
+        const isSecureContext = window.isSecureContext;
+        
+        if (isAndroid && isChrome) {
+            if (!isSecureContext) {
+                throw new Error('HTTPS is required for biometric authentication on Android Chrome');
+            }
+            
+            // Check if we're in a secure context
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                throw new Error('Biometric authentication requires HTTPS on Android Chrome');
+            }
+        }
+        
+        return true;
+    }
+
+    /**
      * Generate a random challenge for WebAuthn
      */
     generateChallenge() {
@@ -66,6 +89,9 @@ class WebAuthnManager {
             throw new Error('WebAuthn is not supported in this browser');
         }
 
+        // Check Android-specific requirements
+        this.checkAndroidRequirements();
+
         try {
             // Generate a unique user ID if not provided
             if (!userId) {
@@ -93,9 +119,9 @@ class WebAuthnManager {
                         { type: "public-key", alg: -257 }, // RS256
                     ],
                     authenticatorSelection: {
-                        authenticatorAttachment: "platform", // Use built-in authenticators
-                        userVerification: "required", // Require biometric verification
-                        residentKey: "required" // Store credential on device
+                        // Remove platform restriction for Android compatibility
+                        userVerification: "preferred", // Change from "required" to "preferred"
+                        residentKey: "preferred" // Change from "required" to "preferred"
                     },
                     timeout: 60000, // 60 seconds
                     attestation: "none" // Don't require attestation for simplicity
@@ -133,7 +159,19 @@ class WebAuthnManager {
 
         } catch (error) {
             console.error('Registration failed:', error);
-            throw new Error(`Registration failed: ${error.message}`);
+            
+            // Provide more specific error messages for common Android issues
+            if (error.name === 'NotSupportedError') {
+                throw new Error('Biometric authentication is not supported on this device');
+            } else if (error.name === 'NotAllowedError') {
+                throw new Error('Registration was cancelled or not allowed');
+            } else if (error.name === 'SecurityError') {
+                throw new Error('Security error - make sure you are using HTTPS');
+            } else if (error.name === 'InvalidStateError') {
+                throw new Error('Invalid state - credential may already exist');
+            } else {
+                throw new Error(`Registration failed: ${error.message || 'Unknown error occurred'}`);
+            }
         }
     }
 
@@ -144,6 +182,9 @@ class WebAuthnManager {
         if (!this.isSupported) {
             throw new Error('WebAuthn is not supported in this browser');
         }
+
+        // Check Android-specific requirements
+        this.checkAndroidRequirements();
 
         try {
             // Load stored credentials
@@ -167,10 +208,10 @@ class WebAuthnManager {
                     challenge: challenge,
                     allowCredentials: credentialIds.map(id => ({
                         type: "public-key",
-                        id: id,
-                        transports: ["internal"] // Use built-in authenticators
+                        id: id
+                        // Remove transports restriction for Android compatibility
                     })),
-                    userVerification: "required", // Require biometric verification
+                    userVerification: "preferred", // Change from "required" to "preferred"
                     timeout: 60000 // 60 seconds
                 }
             };
@@ -204,7 +245,19 @@ class WebAuthnManager {
 
         } catch (error) {
             console.error('Authentication failed:', error);
-            throw new Error(`Authentication failed: ${error.message}`);
+            
+            // Provide more specific error messages for common Android issues
+            if (error.name === 'NotSupportedError') {
+                throw new Error('Biometric authentication is not supported on this device');
+            } else if (error.name === 'NotAllowedError') {
+                throw new Error('Authentication was cancelled or not allowed');
+            } else if (error.name === 'SecurityError') {
+                throw new Error('Security error - make sure you are using HTTPS');
+            } else if (error.name === 'InvalidStateError') {
+                throw new Error('Invalid state - no credentials found');
+            } else {
+                throw new Error(`Authentication failed: ${error.message || 'Unknown error occurred'}`);
+            }
         }
     }
 
