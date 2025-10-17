@@ -29,7 +29,10 @@ class PWAApp {
             authContainer: document.getElementById('auth-container'),
             content: document.getElementById('content'),
             returnHomeBtn: document.getElementById('return-home-btn'),
-            logoutContentBtn: document.getElementById('logout-content-btn')
+            logoutContentBtn: document.getElementById('logout-content-btn'),
+            signingInput: document.getElementById('signing-input'),
+            signDataBtn: document.getElementById('sign-data-btn'),
+            signingResult: document.getElementById('signing-result')
         };
     }
 
@@ -116,6 +119,7 @@ class PWAApp {
         this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
         this.elements.returnHomeBtn.addEventListener('click', () => this.handleReturnHome());
         this.elements.logoutContentBtn.addEventListener('click', () => this.handleLogout());
+        this.elements.signDataBtn.addEventListener('click', () => this.handleSignData());
     }
 
     /**
@@ -178,6 +182,47 @@ class PWAApp {
      */
     handleReturnHome() {
         this.showRegisteredState();
+    }
+
+    /**
+     * Handle sign data button click
+     */
+    async handleSignData() {
+        const dataToSign = this.elements.signingInput.value.trim();
+        
+        if (!dataToSign) {
+            this.showNotification('Please enter some text to sign', 'warning');
+            return;
+        }
+
+        try {
+            this.elements.signDataBtn.disabled = true;
+            this.elements.signDataBtn.textContent = 'Signing...';
+
+            console.log('Signing data:', dataToSign);
+            
+            // Sign the data
+            const signature = await this.webauthn.signData(dataToSign);
+            
+            // Verify the signature
+            const isValid = await this.webauthn.verifySignature(dataToSign, signature);
+            
+            // Display results
+            document.getElementById('original-data').textContent = dataToSign;
+            document.getElementById('signature-data').textContent = signature;
+            document.getElementById('verification-result').textContent = isValid ? '✅ Valid' : '❌ Invalid';
+            
+            this.elements.signingResult.style.display = 'block';
+            
+            this.showNotification('Data signed and verified successfully!', 'success');
+            
+        } catch (error) {
+            console.error('Signing failed:', error);
+            this.showNotification(`Signing failed: ${error.message}`, 'error');
+        } finally {
+            this.elements.signDataBtn.disabled = false;
+            this.elements.signDataBtn.textContent = 'Sign Data';
+        }
     }
 
     /**

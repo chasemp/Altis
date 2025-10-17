@@ -3,6 +3,8 @@
  * Implements WebAuthn API for secure biometric authentication using Passkeys
  */
 
+import EncryptionManager from './encryption.js';
+
 class WebAuthnManager {
     constructor() {
         this.isSupported = this.checkSupport();
@@ -10,6 +12,8 @@ class WebAuthnManager {
         this.authCount = 0;
         this.currentUserId = null;
         this.currentCredentialId = null;
+        this.encryptionManager = new EncryptionManager();
+        this.signingKeyPair = null;
     }
 
     /**
@@ -199,6 +203,22 @@ class WebAuthnManager {
             localStorage.setItem('altis_credentials', JSON.stringify(Array.from(this.credentials.entries())));
             localStorage.setItem('altis_user_id', userId);
             localStorage.setItem('altis_credential_id', credential.id);
+
+            // Create and store encrypted signing key pair
+            try {
+                console.log('Creating encrypted signing key pair...');
+                const signingKeyPair = await this.encryptionManager.generateSigningKeyPair();
+                const encryptionKey = await this.encryptionManager.deriveEncryptionKey({
+                    credentialId: credential.id,
+                    response: credential.response
+                });
+                await this.encryptionManager.storeEncryptedKeys(signingKeyPair.privateKey, signingKeyPair.publicKey, encryptionKey);
+                this.signingKeyPair = signingKeyPair;
+                console.log('Encrypted signing key pair created and stored successfully');
+            } catch (error) {
+                console.error('Failed to create encrypted signing key pair:', error);
+                // Continue without signing keys - WebAuthn still works
+            }
 
             return {
                 success: true,
@@ -460,6 +480,22 @@ class WebAuthnManager {
             // Store updated data
             localStorage.setItem('altis_auth_count', this.authCount.toString());
 
+            // Load encrypted signing key pair
+            try {
+                console.log('Loading encrypted signing key pair...');
+                const encryptionKey = await this.encryptionManager.deriveEncryptionKey({
+                    credentialId: credentialId,
+                    response: assertion.response
+                });
+                const privateKey = await this.encryptionManager.loadEncryptedPrivateKey(encryptionKey);
+                const publicKey = await this.encryptionManager.loadPublicKey();
+                this.signingKeyPair = { privateKey, publicKey };
+                console.log('Encrypted signing key pair loaded successfully');
+            } catch (error) {
+                console.error('Failed to load encrypted signing key pair:', error);
+                // Continue without signing keys - WebAuthn still works
+            }
+
             return {
                 success: true,
                 credentialId: credentialId,
@@ -549,6 +585,70 @@ class WebAuthnManager {
      */
     isAuthenticated() {
         return !!this.currentUserId;
+    }
+
+    /**
+     * Sign data with the encrypted private key
+     */
+    async signData(data) {
+        if (!this.signingKeyPair || !this.signingKeyPair.privateKey) {
+            throw new Error('No signing key available - please authenticate first');
+        }
+
+        try {
+            console.log('Signing data with encrypted private key...');
+            const signature = await this.encryptionManager.signData(data, this.signingKeyPair.privateKey);
+            console.log('Data signed successfully');
+            return signature;
+        } catch (error) {
+            console.error('Failed to sign data:', error);
+            throw new Error('Failed to sign data');
+        }
+    }
+
+    /**
+     * Verify signature with the public key
+     */
+    async verifySignature(data, signature) {
+        if (!this.signingKeyPair || !this.signingKeyPair.publicKey) {
+            throw new Error('No public key available - please authenticate first');
+        }
+
+        try {
+            console.log('Verifying signature with public key...');
+            const isValid = await this.encryptionManager.verifySignature(data, signature, this.signingKeyPair.publicKey);
+            console.log('Signature verification completed');
+            return isValid;
+        } catch (error) {
+            console.error('Failed to verify signature:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get public key for external verification
+     */
+    async getPublicKey() {
+        if (!this.signingKeyPair || !this.signingKeyPair.publicKey) {
+            throw new Error('No public key available - please authenticate first');
+        }
+
+        try {
+            const exportedKey = await crypto.subtle.exportKey('spki', this.signingKeyPair.publicKey);
+            const keyArray = new Uint8Array(exportedKey);
+            const keyBase64 = btoa(String.fromCharCode(...keyArray));
+            return keyBase64;
+        } catch (error) {
+            console.error('Failed to export public key:', error);
+            throw new Error('Failed to export public key');
+        }
+    }
+
+    /**
+     * Check if encrypted signing keys exist
+     */
+    hasEncryptedSigningKeys() {
+        return this.encryptionManager.hasEncryptedKeys();
     }
 }
 

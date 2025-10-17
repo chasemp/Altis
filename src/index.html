@@ -111,6 +111,29 @@
                     </div>
                 </div>
                 
+                <div class="signing-demo">
+                    <h3>🔐 Data Signing Demo</h3>
+                    <p>Test the biometric-encrypted private key for data signing:</p>
+                    <div class="signing-controls">
+                        <input type="text" id="signing-input" placeholder="Enter text to sign..." class="signing-input">
+                        <button id="sign-data-btn" class="btn btn-secondary">Sign Data</button>
+                    </div>
+                    <div id="signing-result" class="signing-result" style="display: none;">
+                        <div class="result-item">
+                            <label>Original Data:</label>
+                            <span id="original-data" class="detail-value">-</span>
+                        </div>
+                        <div class="result-item">
+                            <label>Signature:</label>
+                            <span id="signature-data" class="detail-value">-</span>
+                        </div>
+                        <div class="result-item">
+                            <label>Verification:</label>
+                            <span id="verification-result" class="detail-value">-</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="action-buttons">
                     <button id="return-home-btn" class="btn btn-primary">
                         🏠 Return to Home

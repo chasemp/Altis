@@ -269,6 +269,75 @@ body {
     border-radius: 4px;
 }
 
+/* Signing Demo */
+.signing-demo {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 2rem 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.signing-demo h3 {
+    color: #2d3748;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-size: 1.3rem;
+}
+
+.signing-demo p {
+    color: #718096;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.signing-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.signing-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.signing-input:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+
+.signing-result {
+    background: #f7fafc;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid #48bb78;
+}
+
+.result-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.result-item:last-child {
+    margin-bottom: 0;
+}
+
+.result-item label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
 /* Action Buttons */
 .action-buttons {
     display: flex;
